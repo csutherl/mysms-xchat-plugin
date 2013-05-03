@@ -4,6 +4,7 @@ import json
 import logging
 from custom_logging import CustomLogging, console
 
+
 class Client():
 
     __MySms = False
@@ -27,7 +28,7 @@ class Client():
         self.log.debug(login)
         user_info = json.loads(login)
 
-        if(user_info['errorCode'] is not 0):
+        if user_info['errorCode'] is not 0:
             raise Exception('Failed to login. Error code is ' + str(user_info['errorCode'])) # Explanation of codes is here: http://api.mysms.com/resource_User.html#path__user_login.html
 
         self.log.debug(user_info) # debug login data
@@ -39,12 +40,12 @@ class Client():
         usercontacts = self.__MySms.ApiCall('json', '/user/contact/contacts/get', req_data) # calling method ApiCall
         self.log.debug(usercontacts) # print result
 
-    def sendText(self):
-        # recipients must have '91' prefix for US numbers
+    def sendText(self, number, message):
+        # recipients must have '+1' prefix for US numbers
         req_data = {
-            "recipients": [mysms_config['test_number']],
-            "message": 'hii;',
-             "encoding": 0,
+            "recipients": [number],
+            "message": message,
+            "encoding": 0,
             "smsConnectorId": 0,
             "store": True,
         }
@@ -52,8 +53,19 @@ class Client():
         sendsms = self.__MySms.ApiCall('json', '/remote/sms/send', req_data) # calling method ApiCall
         self.log.debug(sendsms) # print result
 
+    def sync(self, number):
+        req_data = {
+            "address": number,
+            "offset": 0,
+            "limit": 5,
+        }
+
+        result = self.__MySms.ApiCall('json', '/user/message/get/by/conversation', req_data) # calling method ApiCall
+        self.log.debug(result) # print result
+
 if __name__ == "__main__":
     c = Client()
     c.login()
-    c.getContacts()
-    # c.sendText()
+    # c.getContacts()
+    # c.sendText(mysms_config['test_number'], 'testing')
+    c.sync(mysms_config['test_number'])

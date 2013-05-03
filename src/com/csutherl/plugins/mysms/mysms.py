@@ -2,18 +2,19 @@ import json
 import pycurl
 import StringIO
 
+
 class Mysms():
 
     __ApiKey = False
     __AuthToken = False
     __BaseUrl = 'https://api.mysms.com/'
 
-    def __init__(self, apikey, authtoken = False): 
+    def __init__(self, apikey, authtoken=False):
         self.__ApiKey = apikey
         self.__AuthToken = authtoken
     
     def setAuthToken(self, authtoken):
-          self.__AuthToken = authtoken
+        self.__AuthToken = authtoken
 
     def ApiCall(self, rest, resource, data, useAuthToken=True):
         if rest == '' and rest != 'json' and rest != 'xml':
