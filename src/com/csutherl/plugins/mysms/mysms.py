@@ -3,7 +3,7 @@ import pycurl
 import StringIO
 
 
-class Mysms():
+class MySms():
 
     __ApiKey = False
     __AuthToken = False
@@ -15,6 +15,10 @@ class Mysms():
     
     def setAuthToken(self, authtoken):
         self.__AuthToken = authtoken
+
+    def JsonApiCall(self, resource, data, useAuthToken=True):
+        result = self.ApiCall('json', resource, data, useAuthToken)
+        return json.loads(result)
 
     def ApiCall(self, rest, resource, data, useAuthToken=True):
         if rest == '' and rest != 'json' and rest != 'xml':
@@ -37,8 +41,7 @@ class Mysms():
                 data['authToken'] = self.__AuthToken
 
             result = self.curlRequest(rest + resource, data)
-            # instead of passing back the string result, we decode and pass back json
-            #return json.loads(result)
+            self.debug(result)
             return result
 
     def curlRequest(self, resource, data):

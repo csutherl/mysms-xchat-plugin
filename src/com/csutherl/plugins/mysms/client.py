@@ -1,11 +1,10 @@
-from mysms import Mysms
+from mysms import MySms
 from settings import mysms_config
-import json
 import logging
 from custom_logging import CustomLogging, console
 
 
-class Client():
+class MySmsClient():
 
     __MySms = False
 
@@ -19,17 +18,17 @@ class Client():
         # get the API Key from your local settings
         api_key = mysms_config['api_key']
         # initialize class with apiKey and AuthToken(if available)
-        self.__MySms = Mysms(api_key)
+        self.__MySms = MySms(api_key)
 
         # lets login user to get AuthToken
         login_data = {'msisdn': mysms_config['accountMsisdn'], 'password': mysms_config['accountPassword']}
 
-        login = self.__MySms.ApiCall('json', '/user/login', login_data, False) # providing REST type(json/xml), resource from http://api.mysms.com/index.html and POST data
-        self.log.debug(login)
-        user_info = json.loads(login)
+        # providing REST type(json/xml), resource from http://api.mysms.com/index.html and POST data
+        user_info = self.__MySms.JsonApiCall('/user/login', login_data, False)
 
         if user_info['errorCode'] is not 0:
-            raise Exception('Failed to login. Error code is ' + str(user_info['errorCode'])) # Explanation of codes is here: http://api.mysms.com/resource_User.html#path__user_login.html
+            # Explanation of codes is here: http://api.mysms.com/resource_User.html#path__user_login.html
+            raise Exception('Failed to login. Error code is ' + str(user_info['errorCode']))
 
         self.log.debug(user_info) # debug login data
 
@@ -37,8 +36,7 @@ class Client():
 
     def getContacts(self):
         req_data = {} # no required data
-        usercontacts = self.__MySms.ApiCall('json', '/user/contact/contacts/get', req_data) # calling method ApiCall
-        self.log.debug(usercontacts) # print result
+        self.__MySms.JsonApiCall('/user/contact/contacts/get', req_data) # calling method ApiCall
 
     def sendText(self, number, message):
         # recipients must have '+1' prefix for US numbers
@@ -50,8 +48,7 @@ class Client():
             "store": True,
         }
 
-        sendsms = self.__MySms.ApiCall('json', '/remote/sms/send', req_data) # calling method ApiCall
-        self.log.debug(sendsms) # print result
+        self.__MySms.JsonApiCall('/remote/sms/send', req_data) # calling method ApiCall
 
     def sync(self, number):
         req_data = {
@@ -60,11 +57,10 @@ class Client():
             "limit": 5,
         }
 
-        result = self.__MySms.ApiCall('json', '/user/message/get/by/conversation', req_data) # calling method ApiCall
-        self.log.debug(result) # print result
+        self.__MySms.JsonApiCall('/user/message/get/by/conversation', req_data) # calling method ApiCall
 
 if __name__ == "__main__":
-    c = Client()
+    c = MySmsClient()
     c.login()
     # c.getContacts()
     # c.sendText(mysms_config['test_number'], 'testing')

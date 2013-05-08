@@ -11,6 +11,7 @@ settings_log.addHandler(console)
 
 pp = pprint.PrettyPrinter(indent=4)
 
+# TODO: Update the file location to include the xchat dir or make this editable in the script
 settings_filename = '.mysms-settings.yaml'
 settings_fs_locs = ["{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
 
