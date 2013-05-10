@@ -11,9 +11,15 @@ settings_log.addHandler(console)
 
 pp = pprint.PrettyPrinter(indent=4)
 
-# TODO: Update the file location to include the xchat dir or make this editable in the script
 settings_filename = '.mysms-settings.yaml'
-settings_fs_locs = ["{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
+
+# Adding this block allows for the config to exist in ~, xchatdir, or cwd
+try:
+    import xchat
+    settings_fs_locs = [xchat.get_info("xchatdir"), "{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
+except ImportError:
+    settings_log.error("Error loading xchat module.")
+    settings_fs_locs = ["{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
 
 settings_loaded = False
 for the_path in settings_fs_locs:
