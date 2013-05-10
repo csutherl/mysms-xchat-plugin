@@ -1,6 +1,10 @@
+__author__ = 'coty'
+
 import json
 import pycurl
 import StringIO
+import logging
+from custom_logging import CustomLogging, console
 
 
 class MySms():
@@ -12,7 +16,12 @@ class MySms():
     def __init__(self, apikey, authtoken=False):
         self.__ApiKey = apikey
         self.__AuthToken = authtoken
-    
+
+        # setup logging
+        self.log = logging.getLogger(name='mysms')
+        self.log.setLevel(CustomLogging.get_env_specific_logging())
+        self.log.addHandler(console)
+
     def setAuthToken(self, authtoken):
         self.__AuthToken = authtoken
 
@@ -41,7 +50,7 @@ class MySms():
                 data['authToken'] = self.__AuthToken
 
             result = self.curlRequest(rest + resource, data)
-            self.debug(result)
+            self.log.debug(result)
             return result
 
     def curlRequest(self, resource, data):
