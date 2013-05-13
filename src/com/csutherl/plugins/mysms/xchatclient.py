@@ -10,7 +10,6 @@ __module_author__ = "coty"
 import sys
 import os
 import logging
-from custom_logging import CustomLogging, console
 
 path = os.path.dirname(__file__)
 if not path in sys.path:
@@ -19,6 +18,7 @@ if not path in sys.path:
 
 print "\0034" + __module_name__ + " " + __module_version__ + " has been loaded\003"
 
+from custom_logging import CustomLogging, console
 from mysmsclient import MySmsClient
 import xchat
 import re
@@ -42,6 +42,11 @@ class XChatClient():
     def mysms_cb(self, word, word_eol, userdata):
         if len(word) < 2:
             self.log.error("Contact name or number required.")
+        if word[1] == "stop":
+            if len(word) < 3:
+                self.log.error("Please provide a contact to stop receiving updates for.")
+            else:
+                self.remove_from_contexts(word_eol[2])
         else:
             # open a dialog with the contact
             try:
@@ -77,6 +82,9 @@ class XChatClient():
         self.__threadCount += 1
         self.log.debug("Thread %s with delay of %s" % (thread_name, delay))
 
+        # receive messages for person as long as theyre in the context array
+        # TODO: Add function for looping
+
     def focus_tab(self, word, word_eol, userdata):
         focused_context = xchat.get_context()
         focused_channel = focused_context.get_info("channel")
@@ -86,6 +94,13 @@ class XChatClient():
             self.log.debug("Added context %s" % focused_channel)
 
         return xchat.EAT_NONE
+
+    def remove_from_contexts(self, contact_name):
+        try:
+            del self.__contexts[contact_name]
+            self.log.info("Contact %s will no longer receive updates.", contact_name)
+        except KeyError:
+            self.log.error("Contact %s is not receiving updates.", contact_name)
 
     def send_message_cb(self, word, word_eol, userdata):
         # __mysms.sendText(contact, message)
