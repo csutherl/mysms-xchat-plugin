@@ -11,12 +11,13 @@ import string
 class MySmsClient():
 
     __MySms = False
-    __Contacts = False
+    __ContactNumbers = False
+    __ContactNames = False
 
     def __init__(self):
         # setup logging
-        self.log = logging.getLogger(name='client')
-        self.log.setLevel(CustomLogging.get_env_specific_logging())
+        self.log = logging.getLogger(name='mysmsclient')
+        # self.log.setLevel(CustomLogging.get_env_specific_logging())
         self.log.addHandler(console)
 
         self.login()
@@ -45,27 +46,33 @@ class MySmsClient():
     def setContacts(self):
         req_data = {} # no required data
         contacts = self.__MySms.JsonApiCall('/user/contact/contacts/get', req_data) # calling method ApiCall
-        self.__Contacts = {x['name']: x['msisdns'] for x in contacts['contacts']} # comprehension ftw!!
-        self.log.debug(self.__Contacts)
+        self.__ContactNumbers = {x['name']: x['msisdns'] for x in contacts['contacts']} # comprehension ftw!!
+        self.__ContactNames = {x['msisdns'][0]: x['name'] for x in contacts['contacts']}
 
-    def getContacts(self):
-        return self.__Contacts
+    def getContactNumbers(self):
+        return self.__ContactNumbers
+
+    def getContactName(self, contact_number):
+        return self.__ContactNames[contact_number]
+
+    def getContactNames(self):
+        return self.__ContactNames
 
     def verifyContact(self, contact):
         # recipients must have '+1' prefix for US numbers
         # if the string does not contain a number, then we try to find its contact
-        if re.match('^[+]{1}\d{11}', contact) == None:
+        if re.match('^[+]{1}\d{11}', contact) is None:
             try:
-                number = self.__Contacts[contact][0]
+                number = self.__ContactNumbers[contact][0]
                 return number
             except KeyError:
-                raise Exception("Invalid contact.")
+                raise KeyError("Invalid contact.")
         else:
             return contact
 
     def getLikeContact(self, contact):
         arr = []
-        for name in self.__Contacts:
+        for name in self.__ContactNumbers:
             if string.lower(str(contact)) in string.lower(str(name)):
                 arr.append(name)
 
@@ -103,6 +110,7 @@ class MySmsClient():
 
 if __name__ == "__main__":
     c = MySmsClient()
+    print c.getContactName("+18287737111")
     # print c.getLikeContact('justin')
     # c.sendText('Justin', 'testing')
     # c.sendText(mysms_config['test_number'], 'testing')

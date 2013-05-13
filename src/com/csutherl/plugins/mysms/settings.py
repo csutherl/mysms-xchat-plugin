@@ -16,7 +16,7 @@ settings_filename = '.mysms-settings.yaml'
 # Adding this block allows for the config to exist in ~, xchatdir, or cwd
 try:
     import xchat
-    settings_fs_locs = [xchat.get_info("xchatdir"), "{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
+    settings_fs_locs = ["{}/{}".format(xchat.get_info("xchatdir"), settings_filename), "{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
 except ImportError:
     settings_log.error("Error loading xchat module.")
     settings_fs_locs = ["{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]

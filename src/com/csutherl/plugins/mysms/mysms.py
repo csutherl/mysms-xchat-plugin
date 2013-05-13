@@ -19,7 +19,7 @@ class MySms():
 
         # setup logging
         self.log = logging.getLogger(name='mysms')
-        self.log.setLevel(CustomLogging.get_env_specific_logging())
+        # self.log.setLevel(CustomLogging.get_env_specific_logging())
         self.log.addHandler(console)
 
     def setAuthToken(self, authtoken):
