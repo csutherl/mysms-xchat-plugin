@@ -110,7 +110,7 @@ class MySmsClient():
 
 if __name__ == "__main__":
     c = MySmsClient()
-    print c.getContactName("+18287737111")
+    print c.getContactName(mysms_config['test_number'])
     # print c.getLikeContact('justin')
     # c.sendText('Justin', 'testing')
     # c.sendText(mysms_config['test_number'], 'testing')
