@@ -1,11 +1,11 @@
 __author__ = 'coty'
 
-from mysms import MySms
-from settings import mysms_config
 import logging
-from custom_logging import CustomLogging, console
-import re
 import string
+import re
+
+from mysms import MySms
+from settings import mysms_config, console
 
 
 class MySmsClient():
@@ -17,7 +17,7 @@ class MySmsClient():
     def __init__(self):
         # setup logging
         self.log = logging.getLogger(name='mysmsclient')
-        # self.log.setLevel(CustomLogging.get_env_specific_logging())
+        self.log.setLevel(mysms_config['logging_level'])
         self.log.addHandler(console)
 
         self.login()
@@ -39,7 +39,7 @@ class MySmsClient():
             # Explanation of codes is here: http://api.mysms.com/resource_User.html#path__user_login.html
             raise Exception('Failed to login. Error code is ' + str(user_info['errorCode']))
 
-        self.log.debug(user_info) # debug login data
+        self.log.debug(user_info)  # debug login data
 
         self.__MySms.setAuthToken(user_info['authToken']) # setting up auth Token in class (optional)
 
@@ -103,14 +103,14 @@ class MySmsClient():
             "limit": number_of_messages,
         }
 
-        raw_messages = self.__MySms.JsonApiCall('/user/message/get/by/conversation', req_data) # calling method ApiCall
-        messages = {x['messageId']: x['message'] for x in raw_messages['messages']} # comprehension ftw!!
+        raw_messages = self.__MySms.JsonApiCall('/user/message/get/by/conversation', req_data)  # calling method ApiCall
+        messages = {x['messageId']: x['message'] for x in raw_messages['messages']}  # comprehension ftw!!
 
         return messages
 
 if __name__ == "__main__":
     c = MySmsClient()
-    print c.getContactName(mysms_config['test_number'])
+    # print c.getContactName(mysms_config['test_number'])
     # print c.getLikeContact('justin')
     # c.sendText('Justin', 'testing')
     # c.sendText(mysms_config['test_number'], 'testing')

@@ -8,8 +8,11 @@ __module_author__ = "coty"
 #    This line adds the current dirname to the pythonpath
 #
 import sys
-import os
 import logging
+import time
+import os
+import re
+
 
 path = os.path.dirname(__file__)
 if not path in sys.path:
@@ -18,10 +21,10 @@ if not path in sys.path:
 
 print "\0034" + __module_name__ + " " + __module_version__ + " has been loaded\003"
 
-from custom_logging import CustomLogging, console
+from settings import mysms_config, console
 from mysmsclient import MySmsClient
 import xchat
-import re
+# import re
 import thread
 
 
@@ -33,7 +36,7 @@ class XChatClient():
     def __init__(self):
         # setup logging
         self.log = logging.getLogger(name='xchatclient')
-        # self.log.setLevel(CustomLogging.get_env_specific_logging())
+        self.log.setLevel(mysms_config['logging_level'])
         self.log.addHandler(console)
 
         # add hooks
@@ -52,6 +55,7 @@ class XChatClient():
             try:
                 contact = self.__mysms.verifyContact(word_eol[1])
 
+                # if re.match('^[+]\d{11}', contact) is not None:
                 if re.match('^[+]\d{11}', contact) is not None:
                     contact_name = self.__mysms.getContactName(contact)
                 else:
@@ -62,7 +66,9 @@ class XChatClient():
 
                 # trigger receive loop
                 try:
-                    thread.start_new_thread(self.receive_loop, ("ReceiveThread-%d" % self.__threadCount, 30))
+                    # TODO: Prevent multiple threads for the same contact. Check __contexts before created thread.
+                    thread.start_new_thread(self.receive_loop,
+                                            (contact_name, "ReceiveThread-%d" % self.__threadCount, 10))
                 except:
                     self.log.error("Unable to start a new thread!!")
 
@@ -77,13 +83,19 @@ class XChatClient():
 
         return xchat.EAT_ALL
 
-    def receive_loop(self, thread_name, delay):
+    def receive_loop(self, contact_name, thread_name, delay):
         # increment thread count as new ones are created
         self.__threadCount += 1
         self.log.debug("Thread %s with delay of %s" % (thread_name, delay))
 
+        # TODO: Fix whatever is causing an exception here. It crashes xchat on plugin unload...and doesnt work...
         # receive messages for person as long as theyre in the context array
-        # TODO: Add function for looping
+        try:
+            while contact_name in self.__contexts:
+                time.sleep(delay)
+                self.log.debug("Contact: %s __contexts: %s" % (contact_name, self.__contexts))
+        except:
+            self.log.error("BORK BORK BORK")
 
     def focus_tab(self, word, word_eol, userdata):
         focused_context = xchat.get_context()

@@ -4,7 +4,7 @@ import json
 import pycurl
 import StringIO
 import logging
-from custom_logging import CustomLogging, console
+from settings import mysms_config, console
 
 
 class MySms():
@@ -19,7 +19,7 @@ class MySms():
 
         # setup logging
         self.log = logging.getLogger(name='mysms')
-        # self.log.setLevel(CustomLogging.get_env_specific_logging())
+        self.log.setLevel(mysms_config['logging_level'])
         self.log.addHandler(console)
 
     def setAuthToken(self, authtoken):
@@ -31,7 +31,7 @@ class MySms():
 
     def ApiCall(self, rest, resource, data, useAuthToken=True):
         if rest == '' and rest != 'json' and rest != 'xml':
-            raise Exception('Please provide valid REST type: xml/json!') # check if rest is xml or json
+            raise Exception('Please provide valid REST type: xml/json!')  # check if rest is xml or json
 
         # check if https://api.mysms.com/$rest/$resource is valid url ?
 
@@ -39,7 +39,7 @@ class MySms():
             raise Exception('Provided argument is not a boolean value!')
 
         elif not isinstance(data, (list, tuple, dict)):
-            raise Exception('Provide data is not an Array!') # check if provided data is valid array
+            raise Exception('Provide data is not an Array!')  # check if provided data is valid array
 
         else:
             # insert api key into data
