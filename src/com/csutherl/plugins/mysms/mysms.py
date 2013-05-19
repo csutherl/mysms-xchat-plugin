@@ -25,11 +25,11 @@ class MySms():
     def setAuthToken(self, authtoken):
         self.__AuthToken = authtoken
 
-    def JsonApiCall(self, resource, data, useAuthToken=True):
-        result = self.ApiCall('json', resource, data, useAuthToken)
+    def JsonApiCall(self, resource, data, useAuthToken=True, printRes=True):
+        result = self.ApiCall('json', resource, data, useAuthToken, printRes)
         return json.loads(result)
 
-    def ApiCall(self, rest, resource, data, useAuthToken=True):
+    def ApiCall(self, rest, resource, data, useAuthToken=True, printRes=True):
         if rest == '' and rest != 'json' and rest != 'xml':
             raise Exception('Please provide valid REST type: xml/json!')  # check if rest is xml or json
 
@@ -50,7 +50,9 @@ class MySms():
                 data['authToken'] = self.__AuthToken
 
             result = self.curlRequest(rest + resource, data)
-            self.log.debug(result)
+            if printRes:
+                self.log.debug(result)
+
             return result
 
     def curlRequest(self, resource, data):

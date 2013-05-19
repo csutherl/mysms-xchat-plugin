@@ -9,7 +9,6 @@ from settings import mysms_config, console
 
 
 class MySmsClient():
-
     __MySms = False
     __ContactNumbers = False
     __ContactNames = False
@@ -41,16 +40,23 @@ class MySmsClient():
 
         self.log.debug(user_info)  # debug login data
 
-        self.__MySms.setAuthToken(user_info['authToken']) # setting up auth Token in class (optional)
+        self.__MySms.setAuthToken(user_info['authToken'])  # setting up auth Token in class (optional)
 
     def setContacts(self):
-        req_data = {} # no required data
-        contacts = self.__MySms.JsonApiCall('/user/contact/contacts/get', req_data) # calling method ApiCall
-        self.__ContactNumbers = {x['name']: x['msisdns'] for x in contacts['contacts']} # comprehension ftw!!
-        self.__ContactNames = {x['msisdns'][0]: x['name'] for x in contacts['contacts']}
+        req_data = {}  # no required data
+        contacts = self.__MySms.JsonApiCall('/user/contact/contacts/get', req_data, printRes=False)
+        self.log.debug("Contacts loaded. Did not print results to reserve space.")
+        # replaced spaces in names with _'s to allow recv to work
+        # self.__ContactNumbers = {x['name']: x['msisdns'] for x in contacts['contacts']}  # comprehension ftw!!
+        # self.__ContactNames = {x['msisdns'][0]: x['name'] for x in contacts['contacts']}
+        self.__ContactNumbers = {re.sub(' ', '_', x['name']): x['msisdns'] for x in contacts['contacts']}  # comprehension ftw!!
+        self.__ContactNames = {x['msisdns'][0]: re.sub(' ', '_', x['name']) for x in contacts['contacts']}
 
     def getContactNumbers(self):
         return self.__ContactNumbers
+
+    def getContactNumber(self, contact_name):
+        return self.__ContactNumbers[contact_name][0]
 
     def getContactName(self, contact_number):
         return self.__ContactNames[contact_number]
@@ -61,7 +67,7 @@ class MySmsClient():
     def verifyContact(self, contact):
         # recipients must have '+1' prefix for US numbers
         # if the string does not contain a number, then we try to find its contact
-        if re.match('^[+]{1}\d{11}', contact) is None:
+        if re.match('^[+]\d{11}', contact) is None:
             try:
                 number = self.__ContactNumbers[contact][0]
                 return number
@@ -74,7 +80,8 @@ class MySmsClient():
         arr = []
         for name in self.__ContactNumbers:
             if string.lower(str(contact)) in string.lower(str(name)):
-                arr.append(name)
+                # added substring replacement for _ to space to display contacts
+                arr.append(re.sub('_', ' ', name))
 
         return arr
 
@@ -93,7 +100,7 @@ class MySmsClient():
             "store": True,
         }
 
-        result = self.__MySms.JsonApiCall('/remote/sms/send', req_data) # calling method ApiCall
+        result = self.__MySms.JsonApiCall('/remote/sms/send', req_data)  # calling method ApiCall
         return result
 
     def syncMessages(self, phone_number, number_of_messages):
@@ -104,7 +111,8 @@ class MySmsClient():
         }
 
         raw_messages = self.__MySms.JsonApiCall('/user/message/get/by/conversation', req_data)  # calling method ApiCall
-        messages = {x['messageId']: x['message'] for x in raw_messages['messages']}  # comprehension ftw!!
+        messages = {x['messageId']: {'incoming': x['incoming'], 'message': x['message']}
+                    for x in raw_messages['messages']}  # comprehension ftw!!
 
         return messages
 
