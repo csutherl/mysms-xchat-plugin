@@ -43,41 +43,56 @@ class XChatClient():
         # add hooks
         self.add_hooks()
 
-    # TODO: Accept contact names with spaces and convert space to _ dynamically versus making user use _
+    # TODO: Add use case to stop messages for current context instead of specifying contact.
+    def handle_stop(self, raw_contact):
+        # added substring replacement for space to
+        self.log.debug("Removing %s from contacts." % raw_contact)
+
+        self.remove_from_contexts(re.sub(' ', '_', raw_contact))
+
+    # TODO: Handle regular numbers without the +1, assuming US.
+    # TODO: Potential TODO anyway...add setting to config file for default country code and/or area code
+    def open_dialog(self, raw_contact):
+        try:
+            # added substring replacement for space to _
+            name_without_spaces = re.sub(' ', '_', raw_contact)
+            contact = self.__mysms.verifyContact(name_without_spaces)
+
+            self.log.debug("Attempting to open dialog with %s" % contact)
+
+            if re.match('^[+]\d{11}', contact) is not None:
+                contact_name = self.__mysms.getContactName(contact)
+            else:
+                contact_name = contact
+
+            self.log.debug("Opening dialog with %s" % contact_name)
+
+            # surround with quotes in case the contact name has spaces
+            xchat.command("query \"%s\"" % contact_name)
+
+        except KeyError:
+            like_contacts = self.__mysms.getLikeContact(name_without_spaces)
+
+            if len(like_contacts) is not 0:
+                # if the contact does not exist, then we ask if its one of the like contacts
+                xchat.command("echo Did you mean (case sensitive):")
+                for name in like_contacts:
+                    xchat.command("echo %s" % name)
+            else:
+                # added to produce output if name provided is not in contacts
+                self.log.error("Specified name nor any names like it does not exist in your contacts list.")
+
     def mysms_cb(self, word, word_eol, userdata):
         if len(word) < 2:
             self.log.error("Contact name or number required.")
         if word[1].lower() == "stop":
-            # TODO: Add use case to stop to stop messages for current context instead of specifying contact.
             if len(word) < 3:
                 self.log.error("Please provide a contact to stop receiving updates for.")
             else:
-                # added substring replacement for space to _
-                self.remove_from_contexts(re.sub(' ', '_', word_eol[2]))
+                self.handle_stop(word_eol[2])
         else:
             # open a dialog with the contact
-            try:
-                # added substring replacement for space to _
-                name_without_spaces = re.sub(' ', '_', word_eol[1])
-                contact = self.__mysms.verifyContact(name_without_spaces)
-
-                # if re.match('^[+]\d{11}', contact) is not None:
-                if re.match('^[+]\d{11}', contact) is not None:
-                    contact_name = self.__mysms.getContactName(contact)
-                else:
-                    contact_name = contact
-
-                # surround with quotes in case the contact name has spaces
-                xchat.command("query \"%s\"" % contact_name)
-
-            except KeyError:
-                like_contacts = self.__mysms.getLikeContact(name_without_spaces)
-
-                if len(like_contacts) is not 0:
-                    # if the contact does not exist, then we ask if its one of the like contacts
-                    xchat.command("echo Did you mean (case sensitive):")
-                    for name in like_contacts:
-                        xchat.command("echo %s" % name)
+            self.open_dialog(word_eol[1])
 
         return xchat.EAT_ALL
 
@@ -85,7 +100,7 @@ class XChatClient():
         focused_context = xchat.get_context()
         focused_channel = focused_context.get_info("channel")
 
-        if focused_channel not in self.__contexts and focused_channel in self.__mysms.getContactNumbers():
+        if focused_channel not in self.__contexts and focused_channel in self.__mysms.getContactByName():
             self.add_to_contexts(focused_channel, focused_context)
 
         return xchat.EAT_NONE
@@ -101,6 +116,7 @@ class XChatClient():
         except KeyError:
             self.log.error("Contact %s is not receiving updates.", contact_name)
 
+    # TODO: Complete send message logic
     def send_message_cb(self, word, word_eol, userdata):
         # __mysms.sendText(contact, message)
 
@@ -111,7 +127,6 @@ class XChatClient():
         if message['incoming']:
             context = self.__contexts[contact]
             # take advantage of the recv command and use it to simulate server response
-            # xchat.command('recv :Spartacus!~italy@i.am.spartacus PRIVMSG coty :No I am Spartacus!')
             context.command("recv :%s!%s@mysms.com PRIVMSG %s :%s" % (contact, contact, xchat.get_info('nick'), message['message']))
         elif not message['incoming']:  # message is not incoming
             print message['message']
@@ -121,8 +136,9 @@ class XChatClient():
     # when we send a message via the mysms command, then this should loop to check for messages from that contact
     def receive_message(self, contact_phone):
         contact_name = self.__mysms.getContactName(contact_phone)
-        # xchat.get_prefs('text_max_lines'))  # enough messages to fill scrollback buffer
-        messages = self.sort_messages(self.__mysms.syncMessages(contact_phone, 5))
+
+        message_limit = xchat.get_prefs('text_max_lines')  # enough messages to fill scroll back buffer
+        messages = self.sort_messages(self.__mysms.syncMessages(contact_phone, message_limit))  # 5)) # 5 for testing
 
         # retrieve from file
         curr_maxId = get_max_id(self, contact_name)  # passing self so that logging comes through the client class

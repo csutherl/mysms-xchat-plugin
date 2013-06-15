@@ -49,13 +49,14 @@ class MySms():
                 # insert authToken key into data
                 data['authToken'] = self.__AuthToken
 
-            result = self.curlRequest(rest + resource, data)
+            result = self.jsonCurlRequest(rest + resource, data)
+
             if printRes:
                 self.log.debug(result)
 
             return result
 
-    def curlRequest(self, resource, data):
+    def jsonCurlRequest(self, resource, data):
         json_encoded_data = json.dumps(data)
 
         curl = pycurl.Curl()
