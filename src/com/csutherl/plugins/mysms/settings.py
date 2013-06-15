@@ -58,6 +58,7 @@ if not settings_loaded:
 # DEBUG = 10
 console.level = mysms_config['logging_level']
 
+# TODO: Check to ensure we dont overwrite the actual receive_delay from the file
 mysms_config['receive_delay'] = 10 * 1000
 
 ## Currently required attributes set in the config are:
