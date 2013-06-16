@@ -116,7 +116,6 @@ class XChatClient():
         except KeyError:
             self.log.error("Contact %s is not receiving updates.", contact_name)
 
-    # TODO: Complete send message logic
     def send_message_cb(self, word, word_eol, userdata):
         contact = xchat.get_info('channel')
         # FYI: "Can not deserialize instance of java.lang.String out of START_ARRAY token" error will occur if you try
@@ -126,10 +125,10 @@ class XChatClient():
         if contact in self.__mysms.getContactByName():
             self.log.debug("Message sent to %s! Message is %s" % (contact, message))
             self.__mysms.sendText(contact, message)
+            return xchat.EAT_ALL
         else:
-            self.log.error("Cannot send message to %s" % contact)
-
-        return xchat.EAT_ALL
+            self.log.debug("%s is not a mysms contact, sending message to server." % contact)
+            return xchat.EAT_NONE
 
     def handle_message(self, contact, message):
         context = self.__contexts[contact]
