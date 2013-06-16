@@ -128,4 +128,4 @@ if __name__ == "__main__":
     # print c.getContactName(mysms_config['test_number'])
     # print c.getLikeContact('shannon')
     # c.sendText(mysms_config['test_number'], 'testing')
-    # c.syncMessages(mysms_config['test_number'], 2)
+    # c.syncMessages(mysms_config['test_number'], 1)

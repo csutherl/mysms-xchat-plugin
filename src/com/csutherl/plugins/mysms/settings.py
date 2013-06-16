@@ -33,7 +33,6 @@ except ImportError:
     settings_log.info("Cannot load xchat module.")
     settings_fs_locs = ["{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
 
-# TODO: Only grab one file and load it, if that fails try to load the next in the list instead of iterating through the list regardless.
 settings_loaded = False
 for the_path in settings_fs_locs:
     settings_log.debug("Attempting to load {}".format(the_path))
@@ -58,6 +57,7 @@ if not settings_loaded:
 # DEBUG = 10
 console.level = mysms_config['logging_level']
 
+# TODO: Check to ensure we dont overwrite the actual receive_delay from the file
 mysms_config['receive_delay'] = 10 * 1000
 
 ## Currently required attributes set in the config are:

@@ -116,20 +116,35 @@ class XChatClient():
         except KeyError:
             self.log.error("Contact %s is not receiving updates.", contact_name)
 
-    # TODO: Complete send message logic
     def send_message_cb(self, word, word_eol, userdata):
-        # __mysms.sendText(contact, message)
+        contact = xchat.get_info('channel')
+        # FYI: "Can not deserialize instance of java.lang.String out of START_ARRAY token" error will occur if you try
+        # and pass an array into JSON here, such as using word instead of word_eol.
+        message = word_eol[0]
 
-        self.log.debug("Message sent! word_eol %s" % word_eol)
-        return xchat.EAT_ALL
+        if contact in self.__mysms.getContactByName():
+            self.log.debug("Message sent to %s! Message is %s" % (contact, message))
+            self.__mysms.sendText(contact, message)
+            return xchat.EAT_ALL
+        else:
+            self.log.debug("%s is not a mysms contact, sending message to server." % contact)
+            return xchat.EAT_NONE
 
     def handle_message(self, contact, message):
+        context = self.__contexts[contact]
         if message['incoming']:
-            context = self.__contexts[contact]
             # take advantage of the recv command and use it to simulate server response
-            context.command("recv :%s!%s@mysms.com PRIVMSG %s :%s" % (contact, contact, xchat.get_info('nick'), message['message']))
+            self.log.debug("Message: %s" % message)
+            # "\uD83D\uDE18" breaks this...need to figure that out, but working around it for now with try/catch
+            try:
+                context.command("recv :%s!%s@mysms.com PRIVMSG %s :%s" % (contact, contact, xchat.get_info('nick'), message['message']))
+            # TODO: Fix this...
+            except UnicodeEncodeError:
+                self.log.error("Cannot encode message.")
+
         elif not message['incoming']:  # message is not incoming
-            print message['message']
+            context.command("echo %s" % message['message'])
+            # print message['message']
         else:
             self.log.error("Error. Cannot determine origin or message: %s" % message)
 
@@ -183,6 +198,7 @@ class XChatClient():
                 # this print is for testing only to ensure that we do not print to contexts other than the contact name
                 # context.command("echo context:%s" % context)
                 contact_phone = self.__mysms.getContactNumber(channel)
+
                 if contact_phone is not None:
                     self.receive_message(contact_phone)
 
