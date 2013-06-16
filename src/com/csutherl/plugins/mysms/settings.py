@@ -33,7 +33,6 @@ except ImportError:
     settings_log.info("Cannot load xchat module.")
     settings_fs_locs = ["{}/{}".format(os.path.expanduser("~"), settings_filename), "".join(settings_filename)]
 
-# TODO: Only grab one file and load it, if that fails try to load the next in the list instead of iterating through the list regardless.
 settings_loaded = False
 for the_path in settings_fs_locs:
     settings_log.debug("Attempting to load {}".format(the_path))
